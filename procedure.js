@@ -862,14 +862,13 @@ app.post('/api/islike', (req, res) => {
    
 })
 /* 上传推文 */
-app.post('/api/upload_tweet', (req, res) => {
+app.post('/api/upload_tweet',upload2.any(), (req, res) => {
     ansyclock22.acquire('mylock22',(done)=>{
-    let cover=req.body.cover
-    let content=req.body.content
+    
         let title=req.body.title
         let time=req.body.time
         let sqlstr='insert into tweet values (?,?,?,?,?,?,?)'
-        db.query(sqlstr,[null,title,cover,content,time,0,0],(err,results)=>{
+        db.query(sqlstr,[null,title,tweet_photo,contentphoto,time,0,0],(err,results)=>{
           if(err){
             
             res.send({
