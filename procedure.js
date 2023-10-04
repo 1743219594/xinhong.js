@@ -56,7 +56,7 @@ const grant_type='authorization_code'
 const db = mysql.createPool({
     host: '127.0.0.1',
     user: 'root',
-    password: 'admin123',
+    password: '123456',
     database: 'xinhong'
 })
 app.use(cors())
@@ -76,7 +76,7 @@ const storage = multer.diskStorage({
         cb(null, path.join(__dirname, '/avator/'))
     },
     filename: (req, file, cb) => {
-        avatorurl = path.join("http://175.178.122.99/", file.originalname).replace(/\\/g, '/').replace(/:\//g, '://')
+        avatorurl = path.join("http://127.0.0.1:8080/", file.originalname).replace(/\\/g, '/').replace(/:\//g, '://')
         cb(null, file.originalname)
     }
 })
@@ -87,7 +87,7 @@ const storage1 = multer.diskStorage({
         cb(null, path.join(__dirname, '/photo/'))
     },
     filename: (req, file, cb) => {
-        photourl.push(path.join("http://175.178.122.99/", file.originalname).replace(/\\/g, '/').replace(/:\//g, '://'))
+        photourl.push(path.join("http://127.0.0.1:8080/", file.originalname).replace(/\\/g, '/').replace(/:\//g, '://'))
         cb(null, file.originalname)
     }
 })
@@ -99,7 +99,7 @@ const storage2 = multer.diskStorage({
         cb(null, path.join(__dirname, '/photo/'))
     },
     filename: (req, file, cb) => {
-       tweet_photo=path.join("http://175.178.122.99/", file.originalname).replace(/\\/g, '/').replace(/:\//g, '://')
+       tweet_photo=path.join("http://127.0.0.1:8080/", file.originalname).replace(/\\/g, '/').replace(/:\//g, '://')
         cb(null, file.originalname)
     }
 })
@@ -109,7 +109,7 @@ const storage4 = multer.diskStorage({
         cb(null, path.join(__dirname, '/photo/'))
     },
     filename: (req, file, cb) => {
-       contentphoto=path.join("http://175.178.122.99/", file.originalname).replace(/\\/g, '/').replace(/:\//g, '://')
+       contentphoto=path.join("http://127.0.0.1:8080/", file.originalname).replace(/\\/g, '/').replace(/:\//g, '://')
         cb(null, file.originalname)
     }
 })
