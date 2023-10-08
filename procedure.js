@@ -47,6 +47,8 @@ const ansyclock36 = new lock()
 const ansyclock37 = new lock()
 const ansyclock38 = new lock()
 const ansyclock39 = new lock()
+const WebSocket = require('ws')
+const server = new WebSocket.Server({ port: 7070 })
 const url='https://api.weixin.qq.com/sns/jscode2session'
 const appid='wx3ddc0ddad04bc402'
 const secret='e9f68024fa4c4d18c7b5d9403e8e7ad6'
@@ -123,7 +125,7 @@ const storage3 = multer.diskStorage({
         cb(null, path.join(__dirname, '/photo/'))
     },
     filename: (req, file, cb) => {
-       teacher_avator=path.join("http://175.178.122.99/", file.originalname).replace(/\\/g, '/').replace(/:\//g, '://')
+       teacher_avator=path.join("http://127.0.0.1:8080/", file.originalname).replace(/\\/g, '/').replace(/:\//g, '://')
         cb(null, file.originalname)
     }
 })
@@ -152,6 +154,39 @@ app.post('/api/contentphoto', upload4.any(), (req, res) => {
   
 
 })
+const clients = [];
+
+// 当客户端连接时，将其WebSocket对象与唯一标识符关联
+server.on('connection', (ws,req) => {
+    let id=req.url.split('=')[1]
+    clients.push({
+        id:id,
+        ws:ws
+    });
+  ws.on('message',(message)=>{
+    let buffer = Buffer.from(message); // 创建一个Buffer对象
+let result = JSON.parse(buffer.toString('utf8')); 
+console.log(result);
+let id=result.id;
+ for(let i=0;i<clients.length;i++)
+ {
+    if(id==clients[i].id)
+    {
+        clients[i].ws.send(result.content)
+    }
+ }
+    
+
+
+  })
+  // 在需要时，您可以根据唯一标识符找到特定客户端的WebSocket对象
+});
+
+
+// 当客户端断开连接时，从映射中移除该客户端
+server.on('close', () => {
+  clients.delete(id);
+});
 /* 获取openid并传回前端 */
 app.post('/api/getcode',(req,res)=>{
        
