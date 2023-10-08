@@ -50,8 +50,8 @@ const ansyclock39 = new lock()
 const WebSocket = require('ws')
 const server = new WebSocket.Server({ port: 7070 })
 const url='https://api.weixin.qq.com/sns/jscode2session'
-const appid='wx3ddc0ddad04bc402'
-const secret='e9f68024fa4c4d18c7b5d9403e8e7ad6'
+const appid=''
+const secret=''
 const grant_type='authorization_code'
 
 // 数据库配置
