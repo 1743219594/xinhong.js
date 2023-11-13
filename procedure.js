@@ -47,11 +47,14 @@ const ansyclock36 = new lock()
 const ansyclock37 = new lock()
 const ansyclock38 = new lock()
 const ansyclock39 = new lock()
+const ansyclock40 = new lock()
+const ansyclock41 = new lock()
+const ansyclock42 = new lock()
 const WebSocket = require('ws')
 const server = new WebSocket.Server({ port: 7070 })
 const url='https://api.weixin.qq.com/sns/jscode2session'
-const appid='wx3ddc0ddad04bc402'
-const secret='e9f68024fa4c4d18c7b5d9403e8e7ad6'
+const appid='wx0d15352ff9769b7d'
+const secret='2dccd38ba77de5d2be2712c11ec9aab2'
 const grant_type='authorization_code'
 
 // 数据库配置
@@ -78,7 +81,7 @@ const storage = multer.diskStorage({
         cb(null, path.join(__dirname, '/avator/'))
     },
     filename: (req, file, cb) => {
-        avatorurl = path.join("http://127.0.0.1:8080/", file.originalname).replace(/\\/g, '/').replace(/:\//g, '://')
+        avatorurl = path.join("http://192.168.1.124:8080/", file.originalname).replace(/\\/g, '/').replace(/:\//g, '://')
         cb(null, file.originalname)
     }
 })
@@ -89,7 +92,7 @@ const storage1 = multer.diskStorage({
         cb(null, path.join(__dirname, '/photo/'))
     },
     filename: (req, file, cb) => {
-        photourl.push(path.join("http://127.0.0.1:8080/", file.originalname).replace(/\\/g, '/').replace(/:\//g, '://'))
+        photourl.push(path.join("http://192.168.1.124:8080/", file.originalname).replace(/\\/g, '/').replace(/:\//g, '://'))
         cb(null, file.originalname)
     }
 })
@@ -101,7 +104,7 @@ const storage2 = multer.diskStorage({
         cb(null, path.join(__dirname, '/photo/'))
     },
     filename: (req, file, cb) => {
-       tweet_photo=path.join("http://127.0.0.1:8080/", file.originalname).replace(/\\/g, '/').replace(/:\//g, '://')
+       tweet_photo=path.join("http://192.168.1.124:8080/", file.originalname).replace(/\\/g, '/').replace(/:\//g, '://')
         cb(null, file.originalname)
     }
 })
@@ -111,7 +114,7 @@ const storage4 = multer.diskStorage({
         cb(null, path.join(__dirname, '/photo/'))
     },
     filename: (req, file, cb) => {
-       contentphoto=path.join("http://127.0.0.1:8080/", file.originalname).replace(/\\/g, '/').replace(/:\//g, '://')
+       contentphoto=path.join("http://192.168.1.124:8080/", file.originalname).replace(/\\/g, '/').replace(/:\//g, '://')
         cb(null, file.originalname)
     }
 })
@@ -125,7 +128,7 @@ const storage3 = multer.diskStorage({
         cb(null, path.join(__dirname, '/photo/'))
     },
     filename: (req, file, cb) => {
-       teacher_avator=path.join("http://127.0.0.1:8080/", file.originalname).replace(/\\/g, '/').replace(/:\//g, '://')
+       teacher_avator=path.join("http://192.168.1.124:8080/", file.originalname).replace(/\\/g, '/').replace(/:\//g, '://')
         cb(null, file.originalname)
     }
 })
@@ -158,23 +161,47 @@ const clients = [];
 
 // 当客户端连接时，将其WebSocket对象与唯一标识符关联
 server.on('connection', (ws,req) => {
-    let id=req.url.split('=')[1]
-    clients.push({
-        id:id,
-        ws:ws
-    });
+    let queryString = req.url;
+
+    // 去掉前面的斜杠
+    queryString = queryString.substring(1);
+    let urlSearchParams = new URLSearchParams(queryString);
+    // 获取查询参数的值
+    let id = urlSearchParams.get('id');
+    let from_id = urlSearchParams.get('from_id');
+    let to_id = urlSearchParams.get('to_id');
+    
+    if(id=='xinhong')
+    {
+        clients.push({
+            id:id,
+            from_id:from_id,
+            to_id:to_id,
+            ws:ws
+        })
+    }
+    else{
+        clients.push({
+            id:id,
+            ws:ws
+        });
+    }
+
   ws.on('message',(message)=>{
     let buffer = Buffer.from(message); // 创建一个Buffer对象
-let result = JSON.parse(buffer.toString('utf8')); 
-console.log(result);
-let id=result.id;
- for(let i=0;i<clients.length;i++)
- {
-    if(id==clients[i].id)
+    let result = JSON.parse(buffer.toString('utf8')); 
+    let id=result.id;
+    for(let i=0;i<clients.length;i++)
     {
-        clients[i].ws.send(result.content)
+        if(id==clients[i].id)
+        {
+            if((result.from_id==clients[i].from_id&&result.to_id==clients[i].to_id)||(result.from_id==clients[i].to_id&&result.to_id==clients[i].from_id))
+            {
+                clients[i].ws.send(result.content)
+            }
+            
+        }
     }
- }
     
 
 
@@ -532,7 +559,7 @@ app.post('/api/cancel_comment',(req,res)=>{
    
         db.query(sqlstr,[reply_id],(err,results)=>{
             if(err){
-              
+           
                 res.send({
                     status:200,
                     message:'更新错误'
@@ -543,6 +570,7 @@ app.post('/api/cancel_comment',(req,res)=>{
                 db.query(sqlStr,[integral,studentid],(err,results)=>{
                     if(err)
                     {  
+                      
                         res.send({
                             status:200,
                             message:'点赞失败'
@@ -963,6 +991,43 @@ app.post('/api/test', (req, res) => {
     })
    
 })
+/* 检测教师端学号与手机号是否相匹配 */
+app.post('/api/teacher_test', (req, res) => {
+    
+
+    ansyclock40.acquire('mylock40',(done)=>{
+       let teacher_id=req.body.studentid
+    let phonenumber=req.body.phonenumber
+    let sqlstr = 'select * from teacher_xinxi where teacherid=? and phonenumber=?'
+    db.query(sqlstr,[teacher_id,phonenumber], (err, results) => {
+
+        if (err) {
+          console.log(err);
+           return res.send({
+                status: 202,
+                message: '查询数据库失败'
+            })
+        }
+      else  if(results.length>0)
+       {  
+          
+            res.send({
+                status:200,
+                
+                
+    })
+        }          
+        else{
+       
+           res.send({
+                  status: 202,
+            })}
+
+    })
+    done()
+    })
+   
+})
 /* 获取推文列表 */
 app.post('/api/get_tweet', (req, res) => {
     let page=parseInt(req.body.page)
@@ -1005,7 +1070,7 @@ app.post('/api/login', (req, res) => {
         db.query(sqlstr, openid, (err, results) => {
 
             if (err) {
-                console.log(err);
+                
                return res.send({
                     status: 202,
                     message: '查询数据库失败'
@@ -1020,7 +1085,8 @@ app.post('/api/login', (req, res) => {
                 avator:results[0].photo,
                phonenumber:results[0].phonenumber,
                studentid:results[0].studentid,
-               Isboss:results[0].administrator
+               Isboss:results[0].administrator,
+               role:results[0].identification
 })}             
             else{
                res.send({
@@ -1236,7 +1302,7 @@ app.post('/api/suggestion', (req, res) => {
         db.query(sql, id, (err, results) => {
 
             if (err)
-                {console.log(err);
+                {
                     res.send({
                    
                         status: 202,
@@ -1247,6 +1313,34 @@ app.post('/api/suggestion', (req, res) => {
                 results.forEach((item)=>{
                     item.content=decodeURIComponent(item.content)
                 })
+                res.send({
+                    status: 200,
+                    message: '获取建议成功',
+                    data: results
+                })
+            }
+        })
+        done()
+    })
+})
+/* 获取咨询消息 */
+app.post('/api/get_con', (req, res) => {
+    ansyclock42.acquire('mylock42', (done) => {
+        let from_id=req.body.from_id
+        let to_id=req.body.to_id
+        let sql = 'select * from consulation where (from_id=? and to_id=?) or (from_id=? and to_id=?)'
+        db.query(sql, [from_id,to_id,to_id,from_id], (err, results) => {
+
+            if (err)
+                {console.log(err);
+                    res.send({
+                   
+                        status: 202,
+                        message: '获取建议失败'
+                    })
+                }
+            else {
+                
                 res.send({
                     status: 200,
                     message: '获取建议成功',
@@ -1329,13 +1423,13 @@ app.post('/api/avator', upload.any(), (req, res) => {
     let openid = req.body.openid
    let nick_name = req.body.nick_name
     let phonenumber=req.body.phonenumber
- 
     let studentid=req.body.studentid
+    let role=req.body.role
     let insertstr = 'insert user values(?,?,?,?,?,?,?,?,?)'
     let selectstr='select * from user where studentid=?'
     db.query(selectstr,studentid,(err,results)=>{
         if(err)
-        {
+        {   
             res.send({
                 status:201,
                 message:'出错了'
@@ -1349,8 +1443,9 @@ app.post('/api/avator', upload.any(), (req, res) => {
             })
         }
         else{
-            db.query(insertstr, [null,nick_name,openid,avatorurl,phonenumber,studentid,'s','0','0'], (err, results) =>{
+            db.query(insertstr, [null,nick_name,openid,avatorurl,phonenumber,studentid,role,'0','0'], (err, results) =>{
                 if (err) {
+                  
                    return res.send({
                         status: 201,
                         message: '注册失败'
@@ -1448,18 +1543,48 @@ app.post('/api/reject', (req, res) => {
         done()
     })
 })
+/* 咨询消息 */
+app.post('/api/consulation_message', (req, res) => {
+    ansyclock41.acquire('mylock41', (done) => {
+       let from_id=req.body.from_id
+       let to_id=req.body.jobid
+       let content=req.body.content
+       let time=req.body.time
+       let avator=req.body.avator
+       let name=req.body.name
+        let sql = 'insert consulation values(?,?,?,?,?,?,?)'
+        db.query(sql, [null,from_id,to_id,time,content,avator,name],(err,results) => {
+            if (err) {
+            
+               res.send({
+                    status: 201,
+                    message: '发送失败'
+                })
+            }
+      else  if(results.affectedRows===1)
+        {
+            res.send({
+                status:200,
+                message:"发送成功"
+            })
+        }
+        })
+        done()
+    })
+})
 /* 上传老师信息 */
 app.post('/api/upload_teacher', (req, res) => {
        ansyclock7.acquire('mylock7',(done)=>{
-        
+       
         let name=req.body.name
       let message=req.body.message
         let work_place=req.body.work_place
         let work_time=req.body.work_time
        let reservation_phone=req.body.reservation_phone
         let level=req.body.level
-        let insertstr = 'insert seek values(?,?,?,?,?,?,?,?)'
-        db.query(insertstr, [null,name,teacher_avator,message,work_place,work_time,reservation_phone,level], function (err, results) {
+        let jobid=req.body.jobid
+        let insertstr = 'insert seek values(?,?,?,?,?,?,?,?,?)'
+        db.query(insertstr, [null,name,teacher_avator,message,work_place,work_time,reservation_phone,level,jobid], function (err, results) {
             if (err) {
                res.send({
                     status: 201,
@@ -1480,6 +1605,7 @@ app.post('/api/upload_teacher', (req, res) => {
        })
     
 })
+
 /* 获取老师的列表 */
 app.post('/api/get_teacher_list', (req, res) => {
        ansyclock8.acquire('mylock8',(done)=>{
